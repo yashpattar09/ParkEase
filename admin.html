@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParkEase - Admin Dashboard</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --primary-dark: #2980b9;
+            --secondary: #2ecc71;
+            --secondary-dark: #27ae60;
+            --dark: #34495e;
+            --light: #f5f7fa;
+            --gray: #ecf0f1;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: var(--dark);
+            color: white;
+            padding: 1.5rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .logo-icon {
+            margin-right: 8px;
+            font-size: 1.8rem;
+        }
+        
+        .sidebar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 0.8rem 1.5rem;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .menu-icon {
+            margin-right: 0.8rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray);
+        }
+        
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .user-name {
+            font-weight: 600;
+        }
+        
+        .user-role {
+            color: #777;
+            font-size: 0.8rem;
+        }
+        
+        /* Overview Cards */
+        .overview-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        .stat-card {
+            display: flex;
+            align-items: center;
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+        
+        .icon-blue {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--primary);
+        }
+        
+        .icon-green {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--secondary);
+        }
+        
+        .icon-orange {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        
+        .icon-red {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+        
+        .stat-info {
+            flex: 1;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+        
+        .stat-label {
+            color: #777;
+            font-size: 0.9rem;
+        }
+        
+        /* Tabs */
+        .tab-container {
+            margin-bottom: 2rem;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gray);
+            margin-bottom: 1.5rem;
+        }
+        
+        .tab {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Parking Layout */
+        .parking-layout {
+            background-color: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        .layout-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .layout-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .layout-legend {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+        
+        .free {
+            background-color: var(--secondary);
+        }
+        
+        .occupied {
+            background-color: var(--danger);
+        }
+        
+        .reserved {
+            background-color: var(--warning);
+        }
+        
+        .disabled {
+            background-color: #95a5a6;
+        }
+        
+        .parking-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 10px;
+        }
+        
+        .parking-spot {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .parking-spot:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Recent Bookings Table */
+        .recent-bookings {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .table-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .view-all {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        td {
+            padding: 1rem;
+            border-top: 1px solid var(--gray);
+        }
+        
+        .status {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--secondary);
+        }
+        
+        .status-pending {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        
+        .status-completed {
+            background-color: rgba(52, 73, 94, 0.1);
+            color: var(--dark);
+        }
+        
+        .status-cancelled {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+        
+        /* Slot Management Form */
+        .slot-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        select.form-control {
+            cursor: pointer;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background-color: #d35400;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
+        
+        /* User Management */
+        .user-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .user-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .user-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .user-card-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-right: 1rem;
+        }
+        
+        .user-card-info h3 {
+            margin-bottom: 0.2rem;
+        }
+        
+        .user-card-email {
+            color: #777;
+            font-size: 0.9rem;
+        }
+        
+        .user-card-details {
+            margin-top: auto;
+            border-top: 1px solid var(--gray);
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .user-card-detail {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .detail-label {
+            color: #777;
+            font-size: 0.9rem;
+        }
+        
+        .detail-value {
+            font-weight: 500;
+        }
+        
+        .user-card-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+        
+        /* Reports */
+        .reports-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        /* Media Queries for Responsiveness */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 70px;
+                padding: 1rem 0;
+            }
+            
+            .sidebar-header {
+                justify-content: center;
+                padding: 0;
+            }
+            
+            .sidebar-brand, .menu-text {
+                display: none;
+            }
+            
+            .menu-icon {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+            
+            .reports-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .overview-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .slot-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .parking-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .user-profile {
+                display: none;
+            }
+            
+            .parking-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <span class="logo-icon">???</span>
+            <div class="sidebar-brand">ParkEase</div>
+        </div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="#" class="active">
+                    <span class="menu-icon">??</span>
+                    <span class="menu-text">Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <span class="menu-icon">??</span>
+                    <span class="menu-text">Parking Slots</span>
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <span class="menu-icon">??</span>
+                    <span class="menu-text">Bookings</span>
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <span class="menu-icon">??</span>
+                    <span class="menu-text">Users</span>
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <span class="menu-icon">??</span>
+                    <span class="menu-text">Reports</span>
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <span class="menu-icon">??</span>
+                    <span class="menu-text">Settings</span>
+                </a>
+            </li>
+            <li>
+                <a href="index.html">
+                    <span class="menu-icon">??</span>
+                    <span class="menu-text">Home Page</span>
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <span class="menu-icon">??</span>
+                    <span class="menu-text">Logout</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="header">
+            <h1 class="page-title">Admin Dashboard</h1>
+            <div class="user-profile">
+                <div class="user-avatar">A</div>
+                <div class="user-info">
+                    <div class="user-name">Admin User</div>
+                    <div class="user-role">System Administrator</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overview Cards -->
+        <div class="overview-cards">
+            <div class="card stat-card">
+                <div class="stat-icon icon-blue">??</div>
+                <div class="stat-info">
+                    <div class="stat-value">250</div>
+                    <div class="stat-label">Total Parking Slots</div>
+                </div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-icon icon-green">?</div>
+                <div class="stat-info">
+                    <div class="stat-value">138</div>
+                    <div class="stat-label">Available Slots</div>
+                </div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-icon icon-orange">??</div>
+                <div class="stat-info">
+                    <div class="stat-value">87</div>
+                    <div class="stat-label">Active Bookings</div>
+                </div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-icon icon-red">??</div>
+                <div class="stat-info">
+                    <div class="stat-value">$8,750</div>
+                    <div class="stat-label">Revenue This Month</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" data-tab="parking-management">Parking Management</div>
+                <div class="tab" data-tab="bookings">Bookings</div>
+                <div class="tab" data-tab="users">Users</div>
+                <div class="tab" data-tab="reports">Reports</div>
+            </div>
+
+            <!-- Parking Management Tab -->
+            <div class="tab-content active" id="parking-management">
+                <div class="parking-layout">
+                    <div class="layout-header">
+                        <h2 class="layout-title">Downtown Parking Layout</h2>
+                        <div class="layout-legend">
+                            <div class="legend-item">
+                                <div class="legend-color free"></div>
+                                <span>Available</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color occupied"></div>
+                                <span>Occupied</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color reserved"></div>
+                                <span>Reserved</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color disabled"></div>
+                                <span>Disabled</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="parking-grid">
+                        <!-- Row 1 -->
+                        <div class="parking-spot" style="background-color: var(--secondary);">A1</div>
+                        <div class="parking-spot" style="background-color: var(--danger);">A2</div>
+                        <div class="parking-spot" style="background-color: var(--secondary);">A3</div>
+                        <div class="parking-spot" style="background-color: var(--secondary);">A4</div>
+                        <div class="parking-spot" style="background-color: var(--warning);">A5</div>
+                        <div class="parking-spot" style="background-color: var(--secondary);">A6</div>
+                        <div class="parking-spot" style="background-color: var(--danger);">A7</div>
+                        <div class="parking-spot" style="background-color: var(--secondary);">A8</div>
+                        <div class="parking-spot" style="background-color: var(--secondary);">A9</div>
+                        <div class="parking-spot" style="background-color: var(--danger);">A10</div>
+                        
+                        <!-- Row 2 -->
+                        <div class="parking-spot" style="background-color: var(--secondary);">B1</div>
+                        <div class="parking-spot" style="background-color: var(--secondary);">B2</div>
+                        <div class="parking-spot" style="background-color: var(--danger);">B3</div>
+                        <div class="parking-spot" style="background-color: var(--secondary);">B4</div>
+                        <div class="parking-spot" style="background-color: var(--danger);">B5</div>
+                        <div class="parking-spot" style="background-color: var(--secondary);">B6</div>
+                        <div class="parking-spot" style="background-color: var(--secondary);">B7</div>
+                        <div class="parking-spot" style="background-color: var(--secondary);">B8</div>
+                        <div class="parking-spot" style="background-color: var(--warning);">B9</div>
+                        <div class="parking-spot" style="background-color: var(--secondary);">B10</div>
+                        
+                        <!-- Row 3 -->
+                        <div class="parking-spot" style="background-color: #95a5a6;">C1</div>
+                        <div class="parking-spot" style="background-color: #95a5a6;">C2</div>
+                        <div class="parking-spot" style="background-color: var(--secondary);">C3</div>
+                        <div class="parking-spot" style="background-color: var(--danger);">C4</div>
+                        <div class="parking-spot" style="background-color: var(--secondary);">C5</div>
+                        <div class="parking-spot" style="background-color: var(--danger);">C6</div>
+                        <div class="parking-spot" style="background-color: var(--secondary);">C7</div>
+                        <div class="parking-spot" style="background-color: var(--secondary);">C8</div>
+                        <div class="parking-spot" style="background-color: var(--danger);">C9</div>
+                        <div class="parking-spot" style="background-color: var(--warning);">C10</div>
+                    </div>
+                </div>
+                
+                <h3 style="margin: 2rem 0 1rem;">Manage Parking Slots</h3>
+                <div class="card">
+                    <form class="slot-form">
+                        <div class="form-group">
+                            <label for="slot-id">Slot ID</label>
+                            <input type="text" id="slot-id" class="form-control" placeholder="e.g., A1, B5">
+                        </div>
+                        <div class="form-group">
+                            <label for="slot-type">Slot Type</label>
+                            <select id="slot-type" class="form-control">
+                                <option value="standard">Standard</option>
+                                <option value="premium">Premium</option>
+                                <option value="ev">EV Charging</option>
+                                <option value="disabled">Disabled Access</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="slot-status">Status</label>
+                            <select id="slot-status" class="form-control">
+                                <option value="available">Available</option>
+                                <option value="occupied">Occupied</option>
+                                <option value="reserved">Reserved</option>
+                                <option value="maintenance">Under Maintenance</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="slot-price">Price per Hour (?)</label>
+                            <input type="number" id="slot-price" class="form-control" value="50">
+                        </div>
+                    </form>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-primary">Add New Slot</button>
+                        <button class="btn btn-warning">Update Slot</button>
+                        <button class="btn btn-danger">Remove Slot</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bookings Tab -->
+            <div class="tab-content" id="bookings">
+                <div class="recent-bookings">
+                    <div class="table-header">
+                        <h2 class="table-title">Recent Bookings</h2>
+                        <a href="#" class="view-all">View All</a>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>User</th>
+                                <th>Slot</th>
+                                <th>Time</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>B-7845</td>
+                                <td>John Doe</td>
+                                <td>A2</td>
+                                <td>Apr 23, 09:30</td>
+                                <td>2 hours</td>
+                                <td><span class="status status-active">Active</span></td>
+                                <td class="actions">
+                                    <button class="btn btn-sm btn-warning">Edit</button>
+                                    <button class="btn btn-sm btn-danger">Cancel</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>B-7844</td>
+                                <td>Sarah Johnson</td>
+                                <td>B5</td>
+                                <td>Apr 23, 10:00</td>
+                                <td>3 hours</td>
+                                <td><span class="status status-active">Active</span></td>
+                                <td class="actions">
+                                    <button class="btn btn-sm btn-warning">Edit</button>
+                                    <button class="btn btn-sm btn-danger">Cancel</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>B-7843</td>
+                                <td>Mike Smith</td>
+                                <td>C6</td>
+                                <td>Apr 23, 08:15</td>
+                                <td>4 hours</td>
+                                <td><span class="status status-active">Active</span></td>
+                                <td class="actions">
+                                    <button class="btn btn-sm btn-warning">Edit</button>
+                                    <button class="btn btn-sm btn-danger">Cancel</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>B-7842</td>
+                                <td>Lisa Taylor</td>
+                                <td>A7</td>
+                                <td>Apr 23, 07:45</td>
+                                <td>8 hours</td>
+                                <td><span class="status status-active">Active</span></td>
+                                <td class="actions">
+                                    <button class="btn btn-sm btn-warning">Edit</button>
+                                    <button class="btn btn-sm btn-danger">Cancel</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>B-7841</td>
+                                <td>Robert Chen</td>
+                                <td>C9</td>
+                                <td>Apr 23, 09:00</td>
+                                <td>2 hours</td>
+                                <td><span class="status status-active">Active</span></td>
+                                <td class="actions">
+                                    <button class="btn btn-sm btn-warning">Edit</button>
+                                    <button class="btn btn-sm btn-danger">Cancel</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>B-7840</td>
+                                <td>Emily Wilson</td>
+                                <td>B3</td>
+                                <td>Apr 23, 08:30</td>
+                                <td>5 hours</td>
+                                <td><span class="status status-pending">Pending</span></td>
+                                <td class="actions">
+                                    <button class="btn btn-sm btn-warning">Edit
+<button class="btn btn-sm btn-warning">Edit</button>
+                                    <button class="btn btn-sm btn-danger">Cancel</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>B-7839</td>
+                                <td>David Brown</td>
+                                <td>A5</td>
+                                <td>Apr 22, 14:00</td>
+                                <td>3 hours</td>
+                                <td><span class="status status-completed">Completed</span></td>
+                                <td class="actions">
+                                    <button class="btn btn-sm btn-warning">View</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>B-7838</td>
+                                <td>Amanda Lee</td>
+                                <td>B9</td>
+                                <td>Apr 22, 10:30</td>
+                                <td>6 hours</td>
+                                <td><span class="status status-cancelled">Cancelled</span></td>
+                                <td class="actions">
+                                    <button class="btn btn-sm btn-warning">View</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div class="tab-content" id="users">
+                <div class="user-list">
+                    <div class="user-card">
+                        <div class="user-card-header">
+                            <div class="user-card-avatar">JD</div>
+                            <div class="user-card-info">
+                                <h3>John Doe</h3>
+                                <div class="user-card-email">john.doe@example.com</div>
+                            </div>
+                        </div>
+                        <div class="user-card-details">
+                            <div class="user-card-detail">
+                                <span class="detail-label">Member Since:</span>
+                                <span class="detail-value">May 15, 2024</span>
+                            </div>
+                            <div class="user-card-detail">
+                                <span class="detail-label">Total Bookings:</span>
+                                <span class="detail-value">23</span>
+                            </div>
+                            <div class="user-card-detail">
+                                <span class="detail-label">Status:</span>
+                                <span class="detail-value">Active</span>
+                            </div>
+                        </div>
+                        <div class="user-card-actions">
+                            <button class="btn btn-primary btn-sm">View Details</button>
+                            <button class="btn btn-danger btn-sm">Disable Account</button>
+                        </div>
+                    </div>
+                    
+                    <div class="user-card">
+                        <div class="user-card-header">
+                            <div class="user-card-avatar">SJ</div>
+                            <div class="user-card-info">
+                                <h3>Sarah Johnson</h3>
+                                <div class="user-card-email">sarah.j@example.com</div>
+                            </div>
+                        </div>
+                        <div class="user-card-details">
+                            <div class="user-card-detail">
+                                <span class="detail-label">Member Since:</span>
+                                <span class="detail-value">Jan 08, 2025</span>
+                            </div>
+                            <div class="user-card-detail">
+                                <span class="detail-label">Total Bookings:</span>
+                                <span class="detail-value">7</span>
+                            </div>
+                            <div class="user-card-detail">
+                                <span class="detail-label">Status:</span>
+                                <span class="detail-value">Active</span>
+                            </div>
+                        </div>
+                        <div class="user-card-actions">
+                            <button class="btn btn-primary btn-sm">View Details</button>
+                            <button class="btn btn-danger btn-sm">Disable Account</button>
+                        </div>
+                    </div>
+                    
+                    <div class="user-card">
+                        <div class="user-card-header">
+                            <div class="user-card-avatar">MS</div>
+                            <div class="user-card-info">
+                                <h3>Mike Smith</h3>
+                                <div class="user-card-email">mike.smith@example.com</div>
+                            </div>
+                        </div>
+                        <div class="user-card-details">
+                            <div class="user-card-detail">
+                                <span class="detail-label">Member Since:</span>
+                                <span class="detail-value">Nov 22, 2024</span>
+                            </div>
+                            <div class="user-card-detail">
+                                <span class="detail-label">Total Bookings:</span>
+                                <span class="detail-value">15</span>
+                            </div>
+                            <div class="user-card-detail">
+                                <span class="detail-label">Status:</span>
+                                <span class="detail-value">Active</span>
+                            </div>
+                        </div>
+                        <div class="user-card-actions">
+                            <button class="btn btn-primary btn-sm">View Details</button>
+                            <button class="btn btn-danger btn-sm">Disable Account</button>
+                        </div>
+                    </div>
+                    
+                    <div class="user-card">
+                        <div class="user-card-header">
+                            <div class="user-card-avatar">LT</div>
+                            <div class="user-card-info">
+                                <h3>Lisa Taylor</h3>
+                                <div class="user-card-email">lisa.t@example.com</div>
+                            </div>
+                        </div>
+                        <div class="user-card-details">
+                            <div class="user-card-detail">
+                                <span class="detail-label">Member Since:</span>
+                                <span class="detail-value">Feb 14, 2025</span>
+                            </div>
+                            <div class="user-card-detail">
+                                <span class="detail-label">Total Bookings:</span>
+                                <span class="detail-value">4</span>
+                            </div>
+                            <div class="user-card-detail">
+                                <span class="detail-label">Status:</span>
+                                <span class="detail-value">Active</span>
+                            </div>
+                        </div>
+                        <div class="user-card-actions">
+                            <button class="btn btn-primary btn-sm">View Details</button>
+                            <button class="btn btn-danger btn-sm">Disable Account</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div class="tab-content" id="reports">
+                <div class="reports-grid">
+                    <div class="card" style="padding: 1.5rem;">
+                        <h3 style="margin-bottom: 1rem;">Revenue Overview</h3>
+                        <div style="height: 300px; background-color: #f9f9f9; border-radius: 8px; display: flex; justify-content: center; align-items: center;">
+                            [Revenue Chart Placeholder]
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="padding: 1.5rem;">
+                        <h3 style="margin-bottom: 1rem;">Occupancy Rate</h3>
+                        <div style="height: 300px; background-color: #f9f9f9; border-radius: 8px; display: flex; justify-content: center; align-items: center;">
+                            [Occupancy Chart Placeholder]
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" style="padding: 1.5rem; margin-top: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Monthly Summary</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Total Bookings</th>
+                                <th>Revenue</th>
+                                <th>Avg. Duration</th>
+                                <th>Peak Hour</th>
+                                <th>Occupancy Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>April 2025</td>
+                                <td>423</td>
+                                <td>?8,750</td>
+                                <td>3.2 hours</td>
+                                <td>9:00 - 10:00</td>
+                                <td>78%</td>
+                            </tr>
+                            <tr>
+                                <td>March 2025</td>
+                                <td>398</td>
+                                <td>?7,820</td>
+                                <td>3.5 hours</td>
+                                <td>10:00 - 11:00</td>
+                                <td>72%</td>
+                            </tr>
+                            <tr>
+                                <td>February 2025</td>
+                                <td>345</td>
+                                <td>?6,980</td>
+                                <td>3.0 hours</td>
+                                <td>9:00 - 10:00</td>
+                                <td>68%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="display: flex; gap: 1.5rem; margin-top: 1.5rem;">
+                    <button class="btn btn-primary">Generate Full Report</button>
+                    <button class="btn btn-outline" style="background-color: white; border: 1px solid var(--primary); color: var(--primary);">Export as CSV</button>
+                    <button class="btn btn-outline" style="background-color: white; border: 1px solid var(--primary); color: var(--primary);">Export as PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabs = document.querySelectorAll('.tab');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs and content
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Show corresponding content
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // Simulate parking spot click for interaction
+            const parkingSpots = document.querySelectorAll('.parking-spot');
+            parkingSpots.forEach(spot => {
+                spot.addEventListener('click', function() {
+                    // For demo purposes, fill the form with the selected slot's info
+                    document.getElementById('slot-id').value = this.textContent;
+                    
+                    // Determine type and status based on current color
+                    const bgColor = this.style.backgroundColor;
+                    if (bgColor.includes('var(--secondary)')) {
+                        document.getElementById('slot-status').value = 'available';
+                    } else if (bgColor.includes('var(--danger)')) {
+                        document.getElementById('slot-status').value = 'occupied';
+                    } else if (bgColor.includes('var(--warning)')) {
+                        document.getElementById('slot-status').value = 'reserved';
+                    } else {
+                        document.getElementById('slot-status').value = 'maintenance';
+                    }
+                    
+                    // Set price based on row (just for demo)
+                    const row = this.textContent.charAt(0);
+                    if (row === 'A') {
+                        document.getElementById('slot-price').value = '60';
+                    } else if (row === 'B') {
+                        document.getElementById('slot-price').value = '50';
+                    } else {
+                        document.getElementById('slot-price').value = '40';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
