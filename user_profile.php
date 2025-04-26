@@ -1,843 +1,153 @@
-<?php
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "test_db";
+﻿<?php
+session_start();
 
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Database connection failed: " . $conn->connect_error);
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit();
 }
 
-$sql = "SELECT * FROM users ORDER BY id DESC LIMIT 1"; // Get last registered user
-$result = $conn->query($sql);
-$user = $result->fetch_assoc();
-?>
+// Database Connection
+$conn = new mysqli('localhost', 'root', '', 'parkease_db');
+if ($conn->connect_error) {
+    die('Connection failed: ' . $conn->connect_error);
+}
 
+// Get user ID from session
+$user_id = $_SESSION['user_id'];
+
+// Fetch user details
+$userQuery = $conn->prepare("SELECT full_name, email, phone FROM users WHERE user_id = ?");
+$userQuery->bind_param('i', $user_id);
+$userQuery->execute();
+$userResult = $userQuery->get_result();
+$user = $userResult->fetch_assoc();
+
+// If no user found
+if (!$user) {
+    header('Location: login.php');
+    exit();
+}
+
+// Fetch user bookings
+$bookingQuery = $conn->prepare("SELECT * FROM bookings WHERE user_id = ?");
+$bookingQuery->bind_param('i', $user_id);
+$bookingQuery->execute();
+$bookings = $bookingQuery->get_result();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Profile - ParkEase</title>
-    <style>
-        :root {
-            --primary: #3498db;
-            --primary-dark: #2980b9;
-            --secondary: #2ecc71;
-            --secondary-dark: #27ae60;
-            --dark: #34495e;
-            --light: #f5f7fa;
-            --gray: #ecf0f1;
-            --warning: #f39c12;
-            --danger: #e74c3c;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background-color: var(--light);
-            color: var(--dark);
-            line-height: 1.6;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        /* Navigation */
-        .navbar {
-            background-color: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .nav-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 0;
-        }
-        
-        .logo {
-            display: flex;
-            align-items: center;
-            font-weight: 700;
-            font-size: 1.5rem;
-            color: var(--primary);
-        }
-        
-        .logo-icon {
-            margin-right: 8px;
-            font-size: 1.8rem;
-        }
-        
-        .nav-links {
-            display: flex;
-            gap: 1.5rem;
-        }
-        
-        .nav-links a {
-            text-decoration: none;
-            color: var(--dark);
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-        
-        .nav-links a:hover {
-            color: var(--primary);
-        }
-        
-        .auth-buttons {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-        
-        .btn {
-            padding: 0.6rem 1.2rem;
-            border-radius: 4px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: none;
-            text-align: center;
-            text-decoration: none;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--primary-dark);
-        }
-        
-        .btn-secondary {
-            background-color: var(--secondary);
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background-color: var(--secondary-dark);
-        }
-        
-        .btn-warning {
-            background-color: var(--warning);
-            color: white;
-        }
-        
-        .btn-danger {
-            background-color: var(--danger);
-            color: white;
-        }
-        
-        .btn-outline {
-            background-color: transparent;
-            border: 1px solid var(--primary);
-            color: var(--primary);
-        }
-        
-        .btn-outline:hover {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        /* User Profile Section */
-        .profile-section {
-            padding: 2rem 0;
-        }
-        
-        .profile-header {
-            background-color: white;
-            border-radius: 10px;
-            padding: 2rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 2rem;
-            align-items: center;
-        }
-        
-        .profile-avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background-color: var(--primary);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 3rem;
-            font-weight: bold;
-        }
-        
-        .profile-info {
-            flex: 1;
-            min-width: 250px;
-        }
-        
-        .profile-info h1 {
-            margin-bottom: 0.5rem;
-            color: var(--dark);
-        }
-        
-        .profile-contact {
-            color: #666;
-            margin-bottom: 1rem;
-        }
-        
-        .profile-stats {
-            display: flex;
-            gap: 2rem;
-            flex-wrap: wrap;
-        }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        .stat-label {
-            font-size: 0.9rem;
-            color: #666;
-        }
-        
-        /* Tabs */
-        .tabs {
-            display: flex;
-            margin-bottom: 1rem;
-            background-color: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        .tab {
-            padding: 1rem 2rem;
-            flex: 1;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            border-bottom: 3px solid transparent;
-            font-weight: 500;
-        }
-        
-        .tab.active {
-            border-bottom: 3px solid var(--primary);
-            color: var(--primary);
-        }
-        
-        .tab:hover:not(.active) {
-            background-color: var(--gray);
-        }
-        
-        /* Tab Content */
-        .tab-content {
-            background-color: white;
-            border-radius: 10px;
-            padding: 2rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-        }
-        
-        .tab-pane {
-            display: none;
-        }
-        
-        .tab-pane.active {
-            display: block;
-            animation: fadeIn 0.5s ease-in;
-        }
-        
-        /* Table Styles */
-        .bookings-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-        
-        .bookings-table th, 
-        .bookings-table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid var(--gray);
-        }
-        
-        .bookings-table th {
-            background-color: var(--gray);
-            font-weight: 600;
-        }
-        
-        .bookings-table tr:hover {
-            background-color: rgba(52, 152, 219, 0.05);
-        }
-        
-        .booking-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .booking-status {
-            padding: 0.3rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-        
-        .status-active {
-            background-color: rgba(46, 204, 113, 0.2);
-            color: var(--secondary-dark);
-        }
-        
-        .status-completed {
-            background-color: rgba(52, 73, 94, 0.2);
-            color: var(--dark);
-        }
-        
-        .status-upcoming {
-            background-color: rgba(52, 152, 219, 0.2);
-            color: var(--primary-dark);
-        }
-        
-        /* Profile Form */
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 0.8rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-        }
-        
-        .form-row {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-        
-        .form-row .form-group {
-            flex: 1;
-            min-width: 200px;
-        }
-        
-        /* Vehicle Card */
-        .vehicle-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .vehicle-card {
-            border: 1px solid var(--gray);
-            border-radius: 8px;
-            padding: 1.5rem;
-            position: relative;
-        }
-        
-        .vehicle-card.primary {
-            border-color: var(--primary);
-        }
-        
-        .primary-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: var(--primary);
-            color: white;
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.8rem;
-        }
-        
-        .vehicle-type {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-        
-        .vehicle-detail {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.3rem;
-            color: #666;
-        }
-        
-        .vehicle-actions {
-            margin-top: 1rem;
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .btn-sm {
-            padding: 0.3rem 0.8rem;
-            font-size: 0.9rem;
-        }
-        
-        /* Footer */
-        footer {
-            background-color: var(--dark);
-            color: white;
-            padding: 3rem 0;
-        }
-        
-        .footer-content {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 2rem;
-            justify-content: space-between;
-        }
-        
-        .footer-branding {
-            flex: 2;
-            min-width: 250px;
-        }
-        
-        .footer-branding h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-        }
-        
-        .footer-links {
-            flex: 1;
-            min-width: 160px;
-        }
-        
-        .footer-links h4 {
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-        }
-        
-        .footer-links ul {
-            list-style: none;
-        }
-        
-        .footer-links li {
-            margin-bottom: 0.5rem;
-        }
-        
-        .footer-links a {
-            color: #ddd;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-        
-        .footer-links a:hover {
-            color: white;
-            text-decoration: underline;
-        }
-        
-        .copyright {
-            text-align: center;
-            padding-top: 2rem;
-            margin-top: 2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .nav-container {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .nav-links {
-                margin: 1rem 0;
-            }
-            
-            .profile-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .profile-avatar {
-                margin: 0 auto;
-            }
-            
-            .profile-info {
-                text-align: center;
-                width: 100%;
-            }
-            
-            .profile-stats {
-                justify-content: center;
-            }
-            
-            .tabs {
-                flex-direction: column;
-            }
-            
-            .tab {
-                border-left: 3px solid transparent;
-                border-bottom: none;
-                text-align: left;
-            }
-            
-            .tab.active {
-                border-left: 3px solid var(--primary);
-                border-bottom: none;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="user_profile.css">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="container nav-container">
-            <div class="logo">
+<!-- Navigation -->
+<nav class="navbar">
+    <div class="container nav-container">
+        <div class="logo">
             <span class="logo-icon">🅿️</span> ParkEase
-                </div>
-            <div class="nav-links">
-                <a href="index.html">Home</a>
-                <a href="#">Locations</a>
-                <a href="#">How It Works</a>
-                <a href="#">Contact</a>
-            </div>
-            <div class="auth-buttons">
-                <a href="#" class="btn btn-outline">Logout</a>
-            </div>
         </div>
-    </nav>
+        <div class="nav-links">
+            <a href="home.php">Home</a>
+            <a href="admin.html">Locations</a>
+            <a href="booking_page.html">Book your slot</a>
+        </div>
+        <div class="auth-buttons">
+            <div class="user-greeting">Welcome, <?php echo htmlspecialchars(explode(' ', $user['full_name'])[0]); ?>!</div>
+            <a href="logout.php" class="btn btn-outline">Logout</a>
+        </div>
+    </div>
+</nav>
 
-    <!-- Profile Section -->
-    <section class="profile-section">
-        <div class="container">
-        <div class="profile-avatar">
-    <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
-</div>
-<h1><?php echo $user['name']; ?></h1>
-<div class="profile-contact">
-    <p><?php echo $user['email']; ?></p>
-    <p>+91 0000000000</p> <!-- Optional: Add phone column to DB later -->
-</div>
-
-                    <div class="profile-stats">
-                        <div class="stat-item">
-                            <div class="stat-value">12</div>
-                            <div class="stat-label">Total Bookings</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">3</div>
-                            <div class="stat-label">Active Bookings</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">2</div>
-                            <div class="stat-label">Registered Vehicles</div>
-                        </div>
-                    </div>
-                </div>
+<!-- Profile Section -->
+<section class="profile-section">
+    <div class="container">
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <?php echo strtoupper(substr($user['full_name'], 0, 2)); ?>
             </div>
-            
-            <!-- Tabs Navigation -->
-            <div class="tabs">
-                <div class="tab active" data-tab="bookings">My Bookings</div>
-                <div class="tab" data-tab="profile">Profile Details</div>
-                <div class="tab" data-tab="vehicles">My Vehicles</div>
-            </div>
-            
-            <!-- Tab Content -->
-            <div class="tab-content">
-                <!-- Bookings Tab -->
-                <div class="tab-pane active" id="bookings">
-                    <h2>My Bookings</h2>
-                    <table class="bookings-table">
-                        <thead>
-                            <tr>
-                                <th>Booking ID</th>
-                                <th>Location</th>
-                                <th>Slot</th>
-                                <th>Date & Time</th>
-                                <th>Vehicle</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>PK-2025042301</td>
-                                <td>Downtown Parking</td>
-                                <td>A-12</td>
-                                <td>Apr 23, 2025 (10:00 AM - 12:00 PM)</td>
-                                <td>Tesla Model 3 (EV-001)</td>
-                                <td><span class="booking-status status-active">Active</span></td>
-                                <td class="booking-actions">
-                                    <button class="btn btn-sm btn-outline">View</button>
-                                    <button class="btn btn-sm btn-danger">Cancel</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>PK-2025042302</td>
-                                <td>Shopping Mall</td>
-                                <td>B-07</td>
-                                <td>Apr 24, 2025 (2:00 PM - 5:00 PM)</td>
-                                <td>Honda Civic (ABC-123)</td>
-                                <td><span class="booking-status status-upcoming">Upcoming</span></td>
-                                <td class="booking-actions">
-                                    <button class="btn btn-sm btn-outline">View</button>
-                                    <button class="btn btn-sm btn-danger">Cancel</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>PK-2025042215</td>
-                                <td>Airport Terminal</td>
-                                <td>C-23</td>
-                                <td>Apr 22, 2025 (8:00 AM - 6:00 PM)</td>
-                                <td>Honda Civic (ABC-123)</td>
-                                <td><span class="booking-status status-active">Active</span></td>
-                                <td class="booking-actions">
-                                    <button class="btn btn-sm btn-outline">View</button>
-                                    <button class="btn btn-sm btn-danger">Cancel</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>PK-2025042101</td>
-                                <td>Downtown Parking</td>
-                                <td>A-05</td>
-                                <td>Apr 21, 2025 (9:00 AM - 5:00 PM)</td>
-                                <td>Tesla Model 3 (EV-001)</td>
-                                <td><span class="booking-status status-completed">Completed</span></td>
-                                <td class="booking-actions">
-                                    <button class="btn btn-sm btn-outline">View</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- Profile Details Tab -->
-                <div class="tab-pane" id="profile">
-                    <h2>Profile Details</h2>
-                    <form class="profile-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="firstName">First Name</label>
-                                <input type="text" id="firstName" class="form-control" value="John">
-                            </div>
-                            <div class="form-group">
-                                <label for="lastName">Last Name</label>
-                                <input type="text" id="lastName" class="form-control" value="Doe">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="email">Email Address</label>
-                                <input type="email" id="email" class="form-control" value="john.doe@example.com">
-                            </div>
-                            <div class="form-group">
-                                <label for="phone">Phone Number</label>
-                                <input type="tel" id="phone" class="form-control" value="+1 (555) 123-4567">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="address">Address</label>
-                            <input type="text" id="address" class="form-control" value="123 Main Street">
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="city">City</label>
-                                <input type="text" id="city" class="form-control" value="New York">
-                            </div>
-                            <div class="form-group">
-                                <label for="state">State/Province</label>
-                                <input type="text" id="state" class="form-control" value="NY">
-                            </div>
-                            <div class="form-group">
-                                <label for="zipCode">Zip/Postal Code</label>
-                                <input type="text" id="zipCode" class="form-control" value="10001">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary">Update Profile</button>
-                        </div>
-                    </form>
-                    
-                    <h3 style="margin-top: 2rem;">Change Password</h3>
-                    <form class="password-form">
-                        <div class="form-group">
-                            <label for="currentPassword">Current Password</label>
-                            <input type="password" id="currentPassword" class="form-control">
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="newPassword">New Password</label>
-                                <input type="password" id="newPassword" class="form-control">
-                            </div>
-                            <div class="form-group">
-                                <label for="confirmPassword">Confirm New Password</label>
-                                <input type="password" id="confirmPassword" class="form-control">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary">Change Password</button>
-                        </div>
-                    </form>
-                </div>
-                
-                <!-- Vehicles Tab -->
-                <div class="tab-pane" id="vehicles">
-                    <h2>My Vehicles</h2>
-                    <div class="vehicle-cards">
-                        <div class="vehicle-card primary">
-                            <span class="primary-badge">Primary</span>
-                            <div class="vehicle-type">Tesla Model 3 (Electric)</div>
-                            <div class="vehicle-detail">
-                                <span>License Plate:</span>
-                                <span>EV-001</span>
-                            </div>
-                            <div class="vehicle-detail">
-                                <span>Color:</span>
-                                <span>White</span>
-                            </div>
-                            <div class="vehicle-actions">
-                                <button class="btn btn-sm btn-outline">Edit</button>
-                                <button class="btn btn-sm btn-danger">Remove</button>
-                            </div>
-                        </div>
-                        
-                        <div class="vehicle-card">
-                            <div class="vehicle-type">Honda Civic (Sedan)</div>
-                            <div class="vehicle-detail">
-                                <span>License Plate:</span>
-                                <span>ABC-123</span>
-                            </div>
-                            <div class="vehicle-detail">
-                                <span>Color:</span>
-                                <span>Silver</span>
-                            </div>
-                            <div class="vehicle-actions">
-                                <button class="btn btn-sm btn-outline">Edit</button>
-                                <button class="btn btn-sm btn-secondary">Set as Primary</button>
-                                <button class="btn btn-sm btn-danger">Remove</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <h3>Add New Vehicle</h3>
-                    <form class="vehicle-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="vehicleType">Vehicle Type</label>
-                                <select id="vehicleType" class="form-control">
-                                    <option value="">Select vehicle type</option>
-                                    <option value="sedan">Sedan</option>
-                                    <option value="suv">SUV</option>
-                                    <option value="hatchback">Hatchback</option>
-                                    <option value="ev">Electric Vehicle</option>
-                                    <option value="motorcycle">Motorcycle</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="vehicleModel">Make & Model</label>
-                                <input type="text" id="vehicleModel" class="form-control" placeholder="e.g., Toyota Camry">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="licensePlate">License Plate</label>
-                                <input type="text" id="licensePlate" class="form-control" placeholder="e.g., ABC-123">
-                            </div>
-                            <div class="form-group">
-                                <label for="vehicleColor">Color</label>
-                                <input type="text" id="vehicleColor" class="form-control" placeholder="e.g., Silver">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary">Add Vehicle</button>
-                        </div>
-                    </form>
+            <div class="profile-info">
+                <h1><?php echo htmlspecialchars($user['full_name']); ?></h1>
+                <div class="profile-contact">
+                    <p><?php echo htmlspecialchars($user['email']); ?></p>
+                    <p><?php echo htmlspecialchars($user['phone']); ?></p>
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-branding">
-                    <h3>??? ParkEase</h3>
-                    <p>Making parking hassle-free with smart technology and seamless booking experiences.</p>
-                </div>
-                <div class="footer-links">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="index.html">Home</a></li>
-                        <li><a href="#">About Us</a></li>
-                        <li><a href="#">Locations</a></li>
-                        <li><a href="#">How It Works</a></li>
-                    </ul>
-                </div>
-                <div class="footer-links">
-                    <h4>Support</h4>
-                    <ul>
-                        <li>Contact us at</li>
-                        <li>+91 9756048379</li>
-                        <li>+91 8088509434</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="copyright">
-                <p>&copy; 2025 ParkEase. All rights reserved.</p>
-            </div>
+        <!-- Tabs Navigation -->
+        <div class="tabs">
+            <div class="tab active" data-tab="bookings">My Bookings</div>
+            <div class="tab" data-tab="profile">Profile Details</div>
         </div>
-    </footer>
 
-    <script>
-        // Tab functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const tabs = document.querySelectorAll('.tab');
-            
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    // Remove active class from all tabs
-                    tabs.forEach(t => t.classList.remove('active'));
-                    
-                    // Add active class to clicked tab
-                    this.classList.add('active');
-                    
-                    // Hide all tab panes
-                    document.querySelectorAll('.tab-pane').forEach(pane => {
-                        pane.classList.remove('active');
-                    });
-                    
-                    // Show the corresponding tab pane
-                    const tabId = this.getAttribute('data-tab');
-                    document.getElementById(tabId).classList.add('active');
-                });
-            });
+        <!-- Tab Content -->
+        <div class="tab-content">
+
+            <!-- Bookings Tab -->
+            <div class="tab-pane active" id="bookings">
+                <h2>My Bookings</h2>
+                <table class="bookings-table">
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>Location</th>
+                            <th>Slot</th>
+                            <th>Date & Time</th>
+                            <th>Vehicle</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($booking = $bookings->fetch_assoc()) { ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($booking['booking_id']); ?></td>
+                                <td><?php echo htmlspecialchars($booking['location']); ?></td>
+                                <td><?php echo htmlspecialchars($booking['slot']); ?></td>
+                                <td><?php echo htmlspecialchars($booking['datetime']); ?></td>
+                                <td><?php echo htmlspecialchars($booking['vehicle_details']); ?></td>
+                                <td><?php echo htmlspecialchars($booking['status']); ?></td>
+                            </tr>
+                        <?php } ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Profile Details Tab -->
+            <div class="tab-pane" id="profile">
+                <h2>Profile Details</h2>
+                <p>Full Name: <?php echo htmlspecialchars($user['full_name']); ?></p>
+                <p>Email: <?php echo htmlspecialchars($user['email']); ?></p>
+                <p>Phone: <?php echo htmlspecialchars($user['phone']); ?></p>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2025 ParkEase. All rights reserved.</p>
+    </div>
+</footer>
+
+<script>
+// Tab functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            const tabId = this.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
         });
-    </script>
+    });
+});
+</script>
 </body>
 </html>
