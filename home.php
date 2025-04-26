@@ -43,7 +43,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 
     <!-- Hero Section -->
     <section class="hero">
-        <div class="container" background-image="parking-lot.jpg">
+        <div class="container" >
             <h1>Smart Parking Made Simple</h1>
             <p>Find and reserve parking spaces in real-time. Say goodbye to parking frustrations and hello to convenience.</p>
             <div class="hero-buttons">

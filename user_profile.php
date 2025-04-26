@@ -30,7 +30,16 @@ if (!$user) {
 }
 
 // Fetch user bookings
-$bookingQuery = $conn->prepare("SELECT * FROM bookings WHERE user_id = ?");
+// Fetch user bookings - updated to match your actual table structure
+// Fetch user bookings - simplified version without joins
+$bookingQuery = $conn->prepare("SELECT 
+    booking_id, 
+    location_id AS location, 
+    spot_id AS slot, 
+    CONCAT(booking_date, ' ', start_time) AS datetime,
+    car_number AS vehicle_details,
+    status
+    FROM bookings WHERE user_id = ?");
 $bookingQuery->bind_param('i', $user_id);
 $bookingQuery->execute();
 $bookings = $bookingQuery->get_result();
