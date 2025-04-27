@@ -31,7 +31,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                 <span class="logo-icon">🅿️</span> ParkEase
             </div>
             <div class="nav-links">
-                <a href="admin.html">Locations</a>
+                <a href="admin.php">Locations</a>
                 <a href="#how-it-works">How It Works</a>
                 <a href="#contact">Contact</a>
             </div>

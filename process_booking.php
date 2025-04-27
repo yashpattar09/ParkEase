@@ -60,19 +60,17 @@ if ($spot_data['status'] !== 'vacant' && $spot_data['status'] !== 'available') {
 }
 $spot_check->close();
 
-// Insert into database
-$stmt = $conn->prepare("INSERT INTO bookings (
-    booking_reference,
-    user_id,
-    location_id,
-    spot_id,
-    car_number,
-    booking_date,
-    start_time,
-    duration_hours,
-    end_time,
-    status
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')");
+// Get price per hour for the selected location
+$price_query = $conn->prepare("SELECT price_per_hour FROM parking_locations WHERE location_id = ?");
+$price_query->bind_param("i", $location_id);
+$price_query->execute();
+$price_result = $price_query->get_result();
+$price_data = $price_result->fetch_assoc();
+$price_per_hour = $price_data['price_per_hour'];
+$price_query->close();
+
+// Calculate total price
+$total_price = $price_per_hour * $duration_hours;
 
 // Get actual spot_id from database
 $get_spot_id = $conn->prepare("SELECT spot_id FROM parking_spots WHERE spot_name = ? AND location_id = ?");
@@ -82,30 +80,24 @@ $spot_id_result = $get_spot_id->get_result();
 $actual_spot_id = $spot_id_result->fetch_assoc()['spot_id'];
 $get_spot_id->close();
 
-$stmt->bind_param("siisssiss", 
-    $booking_reference,
-    $user_id,
-    $location_id,
-    $actual_spot_id,
-    $car_number,
-    $booking_date,
-    $start_time,
-    $duration_hours,
-    $end_time
-);
+// Store booking details in session for payment page
+$_SESSION['pending_booking'] = [
+    'booking_reference' => $booking_reference,
+    'user_id' => $user_id,
+    'location_id' => $location_id,
+    'location_name' => $location,
+    'spot_id' => $actual_spot_id,
+    'spot_name' => $spot_id,
+    'car_number' => $car_number,
+    'booking_date' => $booking_date,
+    'start_time' => $start_time,
+    'duration_hours' => $duration_hours,
+    'end_time' => $end_time,
+    'price_per_hour' => $price_per_hour,
+    'total_price' => $total_price
+];
 
-if ($stmt->execute()) {
-    // Update spot status to occupied
-    $update_spot = $conn->prepare("UPDATE parking_spots SET status = 'occupied' WHERE spot_id = ?");
-    $update_spot->bind_param("i", $actual_spot_id);
-    $update_spot->execute();
-    $update_spot->close();
-    
-    header("Location: booking_success.php?ref=" . urlencode($booking_reference));
-} else {
-    echo "Error: " . $stmt->error;
-}
-
-$stmt->close();
-$conn->close();
+// Redirect to payment page instead of directly booking
+header("Location: payment_page.php");
+exit();
 ?>

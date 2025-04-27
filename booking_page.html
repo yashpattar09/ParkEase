@@ -22,12 +22,14 @@
         .then(data => {
           if (data.length > 0) {
             data.forEach(spot => {
-              const option = document.createElement('option');
-              option.value = spot.spot_name;
-              option.textContent = spot.spot_name + (spot.status === 'available' ? '' : ' (Occupied)');
-              option.disabled = spot.status !== 'available';
-              spotSelect.appendChild(option);
-            });
+  const option = document.createElement('option');
+  option.value = spot.spot_name;
+  // Check if status is either 'available' OR 'vacant'
+  const isAvailable = spot.status === 'available' || spot.status === 'vacant';
+  option.textContent = spot.spot_name + (isAvailable ? '' : ' (Occupied)');
+  option.disabled = !isAvailable;
+  spotSelect.appendChild(option);
+});
           } else {
             const option = document.createElement('option');
             option.textContent = 'No spots available';

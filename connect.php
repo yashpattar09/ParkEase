@@ -3,7 +3,7 @@ session_start();
 $servername = "localhost";
 $username = "root";
 $password = "";
-$database = "parkease_db";
+$database = "parkease";
 
 // Create connection
 $conn = mysqli_connect($servername, $username, $password, $database);
@@ -48,7 +48,7 @@ if ($stmt->execute()) {
     $_SESSION['email'] = $email;
     $_SESSION['full_name'] = $full_name;
     
-    header("Location: login_success.php");
+    header("Location: home.php");
     exit();
 } else {
     header("Location: signup.php?error=Registration failed");

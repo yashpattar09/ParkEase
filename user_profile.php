@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 // Database Connection
-$conn = new mysqli('localhost', 'root', '', 'parkease_db');
+$conn = new mysqli('localhost', 'root', '', 'parkease');
 if ($conn->connect_error) {
     die('Connection failed: ' . $conn->connect_error);
 }
@@ -30,10 +30,9 @@ if (!$user) {
 }
 
 // Fetch user bookings
-// Fetch user bookings - updated to match your actual table structure
-// Fetch user bookings - simplified version without joins
 $bookingQuery = $conn->prepare("SELECT 
     booking_id, 
+    booking_reference,
     location_id AS location, 
     spot_id AS slot, 
     CONCAT(booking_date, ' ', start_time) AS datetime,
@@ -43,6 +42,28 @@ $bookingQuery = $conn->prepare("SELECT
 $bookingQuery->bind_param('i', $user_id);
 $bookingQuery->execute();
 $bookings = $bookingQuery->get_result();
+
+// Handle close booking action
+if(isset($_POST['close_booking']) && isset($_POST['booking_id'])) {
+    $booking_id = $_POST['booking_id'];
+    $spot_id = $_POST['spot_id'];
+    
+    // Update booking status
+    $updateBooking = $conn->prepare("UPDATE bookings SET status = 'completed' WHERE booking_id = ? AND user_id = ?");
+    $updateBooking->bind_param('ii', $booking_id, $user_id);
+    $result = $updateBooking->execute();
+    
+    // Update spot status to vacant
+    if($result) {
+        $updateSpot = $conn->prepare("UPDATE parking_spots SET status = 'available' WHERE spot_id = ?");
+        $updateSpot->bind_param('i', $spot_id);
+        $updateSpot->execute();
+        
+        // Redirect to refresh the page
+        header('Location: user_profile.php?msg=booking_closed');
+        exit();
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -51,6 +72,27 @@ $bookings = $bookingQuery->get_result();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Profile - ParkEase</title>
     <link rel="stylesheet" href="user_profile.css">
+    <style>
+        .action-btn {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .action-btn:hover {
+            background-color: #e60000;
+        }
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
 <!-- Navigation -->
@@ -61,7 +103,7 @@ $bookings = $bookingQuery->get_result();
         </div>
         <div class="nav-links">
             <a href="home.php">Home</a>
-            <a href="admin.html">Locations</a>
+            <a href="admin.php">Locations</a>
             <a href="booking_page.html">Book your slot</a>
         </div>
         <div class="auth-buttons">
@@ -74,6 +116,12 @@ $bookings = $bookingQuery->get_result();
 <!-- Profile Section -->
 <section class="profile-section">
     <div class="container">
+        <?php if(isset($_GET['msg']) && $_GET['msg'] == 'booking_closed'): ?>
+            <div class="success-message">
+                Booking has been successfully closed and the parking spot is now available.
+            </div>
+        <?php endif; ?>
+        
         <div class="profile-header">
             <div class="profile-avatar">
                 <?php echo strtoupper(substr($user['full_name'], 0, 2)); ?>
@@ -108,6 +156,7 @@ $bookings = $bookingQuery->get_result();
                             <th>Date & Time</th>
                             <th>Vehicle</th>
                             <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -119,6 +168,16 @@ $bookings = $bookingQuery->get_result();
                                 <td><?php echo htmlspecialchars($booking['datetime']); ?></td>
                                 <td><?php echo htmlspecialchars($booking['vehicle_details']); ?></td>
                                 <td><?php echo htmlspecialchars($booking['status']); ?></td>
+                                <td>
+                                    <?php if($booking['status'] == 'active'): ?>
+                                        <form method="POST" onsubmit="return confirm('Are you sure you want to close this booking?');">
+                                            <input type="hidden" name="booking_id" value="<?php echo $booking['booking_id']; ?>">
+                                            <input type="hidden" name="spot_id" value="<?php echo $booking['slot']; ?>">
+                                            <button type="submit" name="close_booking" class="action-btn">Close Booking</button>
+                                        </form>
+                                    <?php endif; ?>
+                                    <a href="download_confirmation.php?ref=<?php echo urlencode($booking['booking_reference']); ?>" target="_blank">Download</a>
+                                </td>
                             </tr>
                         <?php } ?>
                     </tbody>
