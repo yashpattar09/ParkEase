@@ -1,8 +1,9 @@
 <?php
+session_start();
 $servername = "localhost";
 $username = "root";
 $password = "";
-$database = "parkease_db";
+$database = "parkease";
 
 // Create connection
 $conn = mysqli_connect($servername, $username, $password, $database);
@@ -18,16 +19,43 @@ $email = mysqli_real_escape_string($conn, $_POST['email']);
 $phone = mysqli_real_escape_string($conn, $_POST['phone']);
 $plain_password = $_POST['password']; // Store the plain text password
 
-// Insert into database using prepared statement
-$stmt = $conn->prepare("INSERT INTO users (full_name, email, phone, password_hash) VALUES (?, ?, ?, ?)");
-$stmt->bind_param("ssss", $full_name, $email, $phone, $plain_password);
+// Validate password strength
+if (strlen($plain_password) < 8) {
+    header("Location: signup.php?error=Password must be at least 8 characters long");
+    exit();
+}
+
+// Check if email already exists
+$check_query = "SELECT * FROM users WHERE email = ?";
+$check_stmt = $conn->prepare($check_query);
+$check_stmt->bind_param("s", $email);
+$check_stmt->execute();
+$result = $check_stmt->get_result();
+
+if ($result->num_rows > 0) {
+    header("Location: signup.php?error=Email already exists");
+    exit();
+}
+
+// Insert into database using prepared statement (store plain password)
+$stmt = $conn->prepare("INSERT INTO users (full_name, email, phone, password) VALUES (?, ?, ?, ?)");
+$stmt->bind_param("ssss", $full_name, $email, $phone, $plain_password); // Store plain text
 
 if ($stmt->execute()) {
-    echo "Signup successful!";
+    // Set session variables
+    $_SESSION['loggedin'] = true;
+    $_SESSION['user_id'] = $stmt->insert_id;
+    $_SESSION['email'] = $email;
+    $_SESSION['full_name'] = $full_name;
+    
+    header("Location: home.php");
+    exit();
 } else {
-    echo "Error: " . $stmt->error;
+    header("Location: signup.php?error=Registration failed");
+    exit();
 }
 
 $stmt->close();
+$check_stmt->close();
 mysqli_close($conn);
 ?>
