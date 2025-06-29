@@ -38,7 +38,7 @@
             top: 50%;
             transform: translateY(-50%);
             background-color: var(--secondary);
-            color: white;
+            color: rgb(252, 230, 230);
             border: none;
             padding: 8px 15px;
             border-radius: 4px;
